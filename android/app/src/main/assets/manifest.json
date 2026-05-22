@@ -1,0 +1,17 @@
+{
+  "name": "CaliTracker",
+  "short_name": "Cali",
+  "description": "Premium Calisthenics Workout Tracker",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#39ff14",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048344.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

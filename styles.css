@@ -192,15 +192,174 @@ h1 {
     font-size: 1rem;
 }
 
-.primary {
-    background: var(--accent-color);
-    color: #000;
+.btn.sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    width: auto;
 }
 
-.secondary {
-    background: var(--card-bg);
+.text-btn {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.dual-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
     color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-list {
+    display: grid;
+    gap: 10px;
+}
+
+.modal-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.modal-item:active {
+    background: var(--accent-glow);
+}
+
+/* Goals & Progress */
+.goal-card {
+    padding: 20px;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.progress-bar-bg {
+    background: rgba(255, 255, 255, 0.1);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: var(--accent-color);
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Quote Card */
+.quote-card {
+    padding: 15px;
+    font-style: italic;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Break Timer */
+.break-timer-card {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.break-header {
+    display: flex;
+    flex-direction: column;
+}
+
+#break-timer-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+/* Quick Start List */
+.exercise-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.quick-start-card {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.quick-start-card:active {
+    border-color: var(--accent-color);
 }
 
 /* Workout View */

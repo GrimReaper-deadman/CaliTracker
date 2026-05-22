@@ -26,6 +26,19 @@
             <!-- Views will be injected here via app.js -->
         </main>
 
+        <!-- Modal for Exercise Picker -->
+        <div id="exercise-modal" class="modal-overlay hidden">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h2>Select Exercise</h2>
+                    <button id="close-modal" class="close-btn">&times;</button>
+                </div>
+                <div id="modal-exercise-list" class="modal-list">
+                    <!-- Exercises will be injected here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Navigation -->
         <nav class="glass-nav">
             <button class="nav-btn active" data-view="dashboard">
@@ -48,6 +61,19 @@
     <template id="tpl-dashboard">
         <div class="view-content fade-in">
             <h1>Welcome Back</h1>
+            
+            <!-- Goal Section -->
+            <div class="goal-card glass mb-20">
+                <div class="goal-header">
+                    <span class="stat-label">Weekly Goal</span>
+                    <span id="goal-progress" class="goal-value">0/0</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div id="goal-bar" class="progress-bar" style="width: 0%"></div>
+                </div>
+                <button id="set-goal-btn" class="text-btn">Set Weekly Goal</button>
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-card glass">
                     <span class="stat-label">Total Workouts</span>
@@ -60,7 +86,7 @@
             </div>
             <div class="action-section">
                 <h2>Quick Start</h2>
-                <div class="exercise-list">
+                <div id="quick-start-list" class="exercise-list">
                     <!-- Exercise categories or quick-log items -->
                 </div>
             </div>
@@ -73,11 +99,29 @@
                 <h1>Active Session</h1>
                 <div id="workout-timer" class="timer">00:00</div>
             </div>
+
+            <!-- Quote Container -->
+            <div id="quote-container" class="quote-card glass mb-20">
+                <p id="motivation-quote">"The only bad workout is the one that didn't happen."</p>
+            </div>
+
             <div id="active-exercises" class="active-exercises">
                 <!-- Active exercise sets -->
             </div>
+            
+            <div id="break-timer-container" class="break-timer-card glass hidden mb-20">
+                <div class="break-header">
+                    <span>Resting...</span>
+                    <span id="break-timer-val">00:00</span>
+                </div>
+                <button id="skip-break-btn" class="btn secondary sm">Skip Break</button>
+            </div>
+
             <div class="workout-controls">
-                <button id="add-exercise-btn" class="btn secondary">Add Exercise</button>
+                <div class="dual-btns">
+                    <button id="add-exercise-btn" class="btn secondary">Add Exercise</button>
+                    <button id="start-break-btn" class="btn secondary">Start Break</button>
+                </div>
                 <button id="finish-workout-btn" class="btn primary">Finish Session</button>
             </div>
         </div>

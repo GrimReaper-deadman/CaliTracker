@@ -26,6 +26,9 @@ public class MainActivity extends Activity {
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
         
+        // Improve WebView performance
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        
         webView.setWebViewClient(new WebViewClient());
         
         setContentView(webView);

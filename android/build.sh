@@ -39,9 +39,12 @@ cd "$BUILD_DIR/dex"
 zip -u "$BUILD_DIR/app-with-dex.apk" classes.dex
 cd "$PROJECT_DIR"
 
-echo "5. Signing APK..."
+echo "5. Aligning APK..."
+zipalign -p -f 4 "$BUILD_DIR/app-with-dex.apk" "$BUILD_DIR/app-aligned.apk"
+
+echo "6. Signing APK..."
 apksigner sign --ks "$KEYSTORE" --ks-pass "pass:$KEY_PASS" --ks-key-alias "$KEY_ALIAS" \
-    --out "$PROJECT_DIR/CaliTracker.apk" "$BUILD_DIR/app-with-dex.apk"
+    --out "$PROJECT_DIR/CaliTracker.apk" "$BUILD_DIR/app-aligned.apk"
 
 echo "Build complete! APK at $PROJECT_DIR/CaliTracker.apk"
 ls -l "$PROJECT_DIR/CaliTracker.apk"

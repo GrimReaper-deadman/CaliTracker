@@ -121,100 +121,133 @@ const state = {
 
 // --- UI Components ---
 const UI = {
-    container: document.getElementById('view-container'),
-    navBtns: document.querySelectorAll('.nav-btn'),
-    streakCount: document.getElementById('streak-count'),
-    modal: document.getElementById('exercise-modal'),
+    // Dynamic getters to ensure we always get the latest element from the DOM
+    get container() { return document.getElementById('view-container'); },
+    get navBtns() { return document.querySelectorAll('.nav-btn'); },
+    get streakCount() { return document.getElementById('streak-count'); },
+    get modal() { return document.getElementById('exercise-modal'); },
 
     renderView(viewName) {
-        state.currentView = viewName;
-        
-        // Update Nav
-        this.navBtns.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === viewName);
-        });
+        try {
+            state.currentView = viewName;
+            
+            // Update Nav
+            this.navBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === viewName);
+            });
 
-        // Load Template
-        const template = document.getElementById(`tpl-${viewName}`);
-        this.container.innerHTML = '';
-        this.container.appendChild(template.content.cloneNode(true));
+            // Load Template
+            const template = document.getElementById(`tpl-${viewName}`);
+            if (!template) throw new Error(`Template tpl-${viewName} not found`);
+            
+            const container = this.container;
+            if (!container) throw new Error("View container not found");
+            
+            container.innerHTML = '';
+            container.appendChild(template.content.cloneNode(true));
 
-        // View Specific Initialization
-        if (viewName === 'dashboard') this.initDashboard();
-        if (viewName === 'workout') this.initWorkout();
-        if (viewName === 'history') this.initHistory();
+            // View Specific Initialization
+            if (viewName === 'dashboard') this.initDashboard();
+            if (viewName === 'workout') this.initWorkout();
+            if (viewName === 'history') this.initHistory();
+        } catch (err) {
+            console.error("Render error:", err);
+        }
     },
 
     initDashboard() {
-        const data = Storage.load();
-        document.getElementById('stat-total').textContent = data.history.length;
-        document.getElementById('stat-best-streak').textContent = data.settings.bestStreak || 0;
-        this.streakCount.textContent = data.settings.streak || 0;
+        try {
+            const data = Storage.load();
+            const totalEl = document.getElementById('stat-total');
+            const bestEl = document.getElementById('stat-best-streak');
+            const streakCountEl = this.streakCount;
+            const goalProgEl = document.getElementById('goal-progress');
+            const goalBarEl = document.getElementById('goal-bar');
+            const setGoalBtn = document.getElementById('set-goal-btn');
+            const quickList = document.getElementById('quick-start-list');
 
-        // Goals
-        const weeklyCount = Storage.getWeeklyWorkoutCount();
-        const goal = data.settings.weeklyGoal || 3;
-        document.getElementById('goal-progress').textContent = `${weeklyCount}/${goal}`;
-        const percent = Math.min((weeklyCount / goal) * 100, 100);
-        document.getElementById('goal-bar').style.width = `${percent}%`;
+            if (totalEl) totalEl.textContent = data.history.length;
+            if (bestEl) bestEl.textContent = data.settings.bestStreak || 0;
+            if (streakCountEl) streakCountEl.textContent = data.settings.streak || 0;
 
-        document.getElementById('set-goal-btn').onclick = () => {
-            const newGoal = prompt("Set your weekly workout goal:", goal);
-            if (newGoal) {
-                data.settings.weeklyGoal = parseInt(newGoal);
-                Storage.save(data);
-                this.initDashboard();
+            // Goals
+            const weeklyCount = Storage.getWeeklyWorkoutCount();
+            const goal = data.settings.weeklyGoal || 3;
+            if (goalProgEl) goalProgEl.textContent = `${weeklyCount}/${goal}`;
+            if (goalBarEl) {
+                const percent = Math.min((weeklyCount / goal) * 100, 100);
+                goalBarEl.style.width = `${percent}%`;
             }
-        };
 
-        // Quick Start
-        const quickList = document.getElementById('quick-start-list');
-        ['Pull-ups', 'Push-ups', 'Dips', 'Muscle-ups'].forEach(ex => {
-            const card = document.createElement('div');
-            card.className = 'quick-start-card glass';
-            card.textContent = ex;
-            card.onclick = () => {
-                this.renderView('workout');
-                this.addExerciseByName(ex);
-            };
-            quickList.appendChild(card);
-        });
+            if (setGoalBtn) {
+                setGoalBtn.onclick = () => {
+                    const newGoal = prompt("Set your weekly workout goal:", goal);
+                    if (newGoal) {
+                        data.settings.weeklyGoal = parseInt(newGoal);
+                        Storage.save(data);
+                        this.initDashboard();
+                    }
+                };
+            }
 
-        this.checkNotifications();
+            // Quick Start
+            if (quickList) {
+                quickList.innerHTML = '';
+                ['Pull-ups', 'Push-ups', 'Dips', 'Muscle-ups'].forEach(ex => {
+                    const card = document.createElement('div');
+                    card.className = 'quick-start-card glass';
+                    card.textContent = ex;
+                    card.onclick = () => {
+                        this.renderView('workout');
+                        this.addExerciseByName(ex);
+                    };
+                    quickList.appendChild(card);
+                });
+            }
+
+            this.checkNotifications();
+        } catch (err) {
+            console.error("Dashboard init error:", err);
+        }
     },
 
     initHistory() {
-        const data = Storage.load();
-        const historyList = document.getElementById('history-list');
-        
-        if (data.history.length === 0) return;
-
-        historyList.innerHTML = '';
-        data.history.forEach((workout, idx) => {
-            const item = document.createElement('div');
-            item.className = 'history-item glass fade-in';
+        try {
+            const data = Storage.load();
+            const historyList = document.getElementById('history-list');
             
-            const date = new Date(workout.date).toLocaleDateString(undefined, { 
-                weekday: 'short', month: 'short', day: 'numeric' 
+            if (!historyList) return;
+            if (data.history.length === 0) return;
+
+            historyList.innerHTML = '';
+            data.history.forEach((workout, idx) => {
+                const item = document.createElement('div');
+                item.className = 'history-item glass fade-in';
+                
+                const date = new Date(workout.date).toLocaleDateString(undefined, { 
+                    weekday: 'short', month: 'short', day: 'numeric' 
+                });
+
+                const totalVolume = workout.exercises.reduce((acc, ex) => {
+                    return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.reps * (s.weight || 0)), 0);
+                }, 0);
+
+                item.innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <div class="history-date">${date}</div>
+                        <button onclick="UI.confirmDelete(${idx})" style="background:none; border:none; color:var(--danger); font-size:0.8rem;">Delete</button>
+                    </div>
+                    <div class="history-title">${workout.name || 'Workout'}</div>
+                    <div class="history-summary">
+                        ${workout.exercises.map(ex => `<span class="history-tag">${ex.name}</span>`).join('')}
+                    </div>
+                    ${totalVolume > 0 ? `<div style="font-size:0.7rem; color:var(--text-secondary); margin-top:5px;">Total Volume: ${totalVolume}kg</div>` : ''}
+                `;
+                historyList.appendChild(item);
             });
-
-            const totalVolume = workout.exercises.reduce((acc, ex) => {
-                return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.reps * (s.weight || 0)), 0);
-            }, 0);
-
-            item.innerHTML = `
-                <div style="display: flex; justify-content: space-between;">
-                    <div class="history-date">${date}</div>
-                    <button onclick="UI.confirmDelete(${idx})" style="background:none; border:none; color:var(--danger); font-size:0.8rem;">Delete</button>
-                </div>
-                <div class="history-title">${workout.name || 'Workout'}</div>
-                <div class="history-summary">
-                    ${workout.exercises.map(ex => `<span class="history-tag">${ex.name}</span>`).join('')}
-                </div>
-                ${totalVolume > 0 ? `<div style="font-size:0.7rem; color:var(--text-secondary); margin-top:5px;">Total Volume: ${totalVolume}kg</div>` : ''}
-            `;
-            historyList.appendChild(item);
-        });
+        } catch (err) {
+            console.error("History init error:", err);
+        }
     },
 
     confirmDelete(idx) {
@@ -225,22 +258,30 @@ const UI = {
     },
 
     initWorkout() {
-        const saved = Storage.loadActiveWorkout();
-        if (saved && !state.activeWorkout) {
-            state.activeWorkout = saved.workout;
-            state.startTime = saved.startTime;
-            this.resumeWorkout();
-        } else if (!state.activeWorkout) {
-            this.startNewWorkout();
-        } else {
-            this.resumeWorkout();
+        try {
+            const saved = Storage.loadActiveWorkout();
+            if (saved && !state.activeWorkout) {
+                state.activeWorkout = saved.workout;
+                state.startTime = saved.startTime;
+                this.resumeWorkout();
+            } else if (!state.activeWorkout) {
+                this.startNewWorkout();
+            } else {
+                this.resumeWorkout();
+            }
+            
+            const addExBtn = document.getElementById('add-exercise-btn');
+            const finishBtn = document.getElementById('finish-workout-btn');
+            const breakBtn = document.getElementById('start-break-btn');
+
+            if (addExBtn) addExBtn.onclick = () => this.showExercisePicker();
+            if (finishBtn) finishBtn.onclick = () => this.finishWorkout();
+            if (breakBtn) breakBtn.onclick = () => this.startBreak();
+            
+            this.updateQuote();
+        } catch (err) {
+            console.error("Workout init error:", err);
         }
-        
-        document.getElementById('add-exercise-btn').onclick = () => this.showExercisePicker();
-        document.getElementById('finish-workout-btn').onclick = () => this.finishWorkout();
-        document.getElementById('start-break-btn').onclick = () => this.startBreak();
-        
-        this.updateQuote();
     },
 
     startNewWorkout() {
@@ -441,22 +482,28 @@ const UI = {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Nav Event Delegation
-    document.querySelector('.glass-nav').addEventListener('click', (e) => {
-        const btn = e.target.closest('.nav-btn');
-        if (btn) {
-            UI.renderView(btn.dataset.view);
+    try {
+        const nav = document.querySelector('.glass-nav');
+        if (nav) {
+            nav.addEventListener('click', (e) => {
+                const btn = e.target.closest('.nav-btn');
+                if (btn) {
+                    UI.renderView(btn.dataset.view);
+                }
+            });
         }
-    });
 
-    // Global UI exposure for inline handlers
-    window.UI = UI;
+        // Global UI exposure for inline handlers
+        window.UI = UI;
 
-    // Initial View - Check for active workout
-    const saved = Storage.loadActiveWorkout();
-    if (saved) {
-        UI.renderView('workout');
-    } else {
-        UI.renderView('dashboard');
+        // Initial View - Check for active workout
+        const saved = Storage.loadActiveWorkout();
+        if (saved) {
+            UI.renderView('workout');
+        } else {
+            UI.renderView('dashboard');
+        }
+    } catch (err) {
+        console.error("Critical Init Error:", err);
     }
 });

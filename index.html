@@ -129,7 +129,10 @@
 
     <template id="tpl-history">
         <div class="view-content fade-in">
-            <h1>Workout History</h1>
+            <div class="header-with-back">
+                <button onclick="UI.renderView('profile')" class="back-btn">←</button>
+                <h1>Workout History</h1>
+            </div>
             <div id="history-list" class="history-list">
                 <!-- History items will be injected here -->
                 <div class="empty-state">No workouts logged yet. Time to hit the bars!</div>
@@ -137,6 +140,133 @@
         </div>
     </template>
 
+    <template id="tpl-ai-generator">
+        <div class="view-content fade-in">
+            <h1>AI Workout Generator</h1>
+            <div class="ai-form glass p-20">
+                <div class="input-group mb-10">
+                    <label>Fitness Level</label>
+                    <select id="ai-level">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                <div class="input-group mb-10">
+                    <label>Goal</label>
+                    <select id="ai-goal">
+                        <option value="strength">Strength</option>
+                        <option value="hypertrophy">Muscle Gain</option>
+                        <option value="endurance">Endurance</option>
+                        <option value="skills">New Skills</option>
+                    </select>
+                </div>
+                <div class="input-group mb-10">
+                    <label>Available Equipment</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="pullup-bar" checked> Pull-up Bar</label>
+                        <label><input type="checkbox" value="dip-bars" checked> Dip Bars</label>
+                        <label><input type="checkbox" value="rings"> Rings</label>
+                        <label><input type="checkbox" value="resistance-bands"> Bands</label>
+                    </div>
+                </div>
+                <button id="generate-ai-btn" class="btn primary">Generate Routine</button>
+            </div>
+            <div id="ai-result" class="mt-20 hidden">
+                <div class="glass p-20">
+                    <h2 id="ai-routine-name">Custom Routine</h2>
+                    <div id="ai-exercises-list"></div>
+                    <button id="start-ai-workout" class="btn secondary mt-10">Start This Workout</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-progress">
+        <div class="view-content fade-in">
+            <h1>Progress Tracking</h1>
+            <div class="stats-tabs mb-20">
+                <button class="tab-btn active" data-tab="stats">Statistics</button>
+                <button class="tab-btn" data-tab="photos">Photos</button>
+            </div>
+            <div id="progress-stats-view">
+                <div class="chart-container glass mb-20">
+                    <canvas id="volume-chart"></canvas>
+                </div>
+                <div class="pr-list glass p-15">
+                    <h3>Personal Records</h3>
+                    <div id="pr-items">
+                        <!-- PRs will be injected here -->
+                    </div>
+                </div>
+            </div>
+            <div id="progress-photos-view" class="hidden">
+                <div class="photo-grid" id="photo-gallery">
+                    <div class="add-photo-card glass" onclick="UI.renderView('camera')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        <span>Take Photo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-camera">
+        <div class="view-content fade-in camera-view">
+            <div class="camera-container">
+                <video id="camera-feed" autoplay playsinline></video>
+                <canvas id="pose-canvas"></canvas>
+                <div class="camera-controls">
+                    <button id="capture-btn" class="capture-btn"></button>
+                    <button id="close-camera" class="btn-icon">×</button>
+                    <button id="toggle-pose" class="btn-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="pose-feedback" class="glass pose-feedback hidden">
+                <p>Form Analysis Active</p>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-profile">
+        <div class="view-content fade-in">
+            <div class="profile-header mb-30">
+                <div class="profile-pic">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div>
+                    <h1 id="user-name-display" style="margin:0;">Guest User</h1>
+                    <p id="user-email-display" class="text-secondary">Sign in to sync data</p>
+                </div>
+            </div>
+            
+            <div class="settings-list glass">
+                <div class="settings-item" onclick="UI.renderView('history')">
+                    <span>Workout History</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+                <div class="settings-item">
+                    <span>Account Settings</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+                <div class="settings-item">
+                    <span>Units (kg/lbs)</span>
+                    <select id="unit-select">
+                        <option value="kg">kg</option>
+                        <option value="lbs">lbs</option>
+                    </select>
+                </div>
+                <div class="settings-item" id="logout-btn-container">
+                    <button id="logout-btn" class="text-btn" style="color:var(--danger);">Log Out</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="app.js" type="module"></script>
 </body>
 </html>

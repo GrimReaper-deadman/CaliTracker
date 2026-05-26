@@ -110,14 +110,50 @@ class Storage {
 
 // --- App State ---
 const state = {
+    user: null,
     currentView: 'dashboard',
     activeWorkout: null,
     timerInterval: null,
     startTime: null,
     breakInterval: null,
     breakTime: 0,
-    notificationPermission: 'default'
+    notificationPermission: 'default',
+    units: 'kg'
 };
+
+// --- Auth Manager ---
+class Auth {
+    static async init() {
+        // Mocking for now, real Supabase integration would go here
+        const savedUser = localStorage.getItem('calitracker_user');
+        if (savedUser) {
+            state.user = JSON.parse(savedUser);
+        }
+    }
+
+    static async login(email, password) {
+        // Simulate login
+        if (email && password) {
+            state.user = { email, name: email.split('@')[0], id: 'user_' + Date.now() };
+            localStorage.setItem('calitracker_user', JSON.stringify(state.user));
+            return { success: true };
+        }
+        return { success: false, error: 'Invalid credentials' };
+    }
+
+    static async signup(name, email, password) {
+        // Simulate signup
+        state.user = { email, name, id: 'user_' + Date.now() };
+        localStorage.setItem('calitracker_user', JSON.stringify(state.user));
+        return { success: true };
+    }
+
+    static logout() {
+        state.user = null;
+        localStorage.removeItem('calitracker_user');
+        UI.renderView('auth');
+    }
+}
 
 // --- UI Components ---
 const UI = {
@@ -129,6 +165,11 @@ const UI = {
 
     renderView(viewName) {
         try {
+            // Auth Guard
+            if (!state.user && viewName !== 'auth') {
+                viewName = 'auth';
+            }
+
             state.currentView = viewName;
             
             // Update Nav
@@ -147,12 +188,53 @@ const UI = {
             container.appendChild(template.content.cloneNode(true));
 
             // View Specific Initialization
+            if (viewName === 'auth') this.initAuth();
             if (viewName === 'dashboard') this.initDashboard();
             if (viewName === 'workout') this.initWorkout();
             if (viewName === 'history') this.initHistory();
+            if (viewName === 'ai-generator') this.initAIGenerator();
+            if (viewName === 'progress') this.initProgress();
+            if (viewName === 'profile') this.initProfile();
+            if (viewName === 'camera') this.initCamera();
         } catch (err) {
             console.error("Render error:", err);
         }
+    },
+
+    initAuth() {
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const showSignup = document.getElementById('show-signup');
+        const showLogin = document.getElementById('show-login');
+
+        showSignup.onclick = (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+        };
+
+        showLogin.onclick = (e) => {
+            e.preventDefault();
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        };
+
+        document.getElementById('login-btn').onclick = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const res = await Auth.login(email, pass);
+            if (res.success) this.renderView('dashboard');
+            else alert(res.error);
+        };
+
+        document.getElementById('signup-btn').onclick = async () => {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const pass = document.getElementById('signup-password').value;
+            const res = await Auth.signup(name, email, pass);
+            if (res.success) this.renderView('dashboard');
+            else alert(res.error);
+        };
     },
 
     initDashboard() {
@@ -477,12 +559,215 @@ const UI = {
         state.activeWorkout = null;
         clearInterval(state.timerInterval);
         this.renderView('dashboard');
+    },
+
+    // --- AI Generator ---
+    initAIGenerator() {
+        const genBtn = document.getElementById('generate-ai-btn');
+        const resultDiv = document.getElementById('ai-result');
+        const list = document.getElementById('ai-exercises-list');
+        const startBtn = document.getElementById('start-ai-workout');
+
+        genBtn.onclick = () => {
+            const level = document.getElementById('ai-level').value;
+            const goal = document.getElementById('ai-goal').value;
+            
+            // Logic to generate routine
+            const routine = this.generateRoutine(level, goal);
+            
+            list.innerHTML = routine.map(ex => `
+                <div class="modal-item" style="text-align:left; margin-bottom:5px;">
+                    <strong>${ex.name}</strong>: ${ex.sets} sets x ${ex.reps}
+                </div>
+            `).join('');
+            
+            resultDiv.classList.remove('hidden');
+            state.pendingRoutine = routine;
+        };
+
+        startBtn.onclick = () => {
+            this.renderView('workout');
+            this.startNewWorkout();
+            state.activeWorkout.name = "AI " + document.getElementById('ai-goal').value + " Routine";
+            state.activeWorkout.exercises = state.pendingRoutine.map(ex => ({
+                name: ex.name,
+                sets: Array(ex.sets).fill({ reps: 0, weight: 0 })
+            }));
+            this.resumeWorkout();
+        };
+    },
+
+    generateRoutine(level, goal) {
+        // Mocking sophisticated AI generation logic
+        const baseRoutines = {
+            beginner: [
+                { name: 'Push-ups', sets: 3, reps: '8-12' },
+                { name: 'Australian Pull-ups', sets: 3, reps: '8-10' },
+                { name: 'Squats', sets: 3, reps: '15' },
+                { name: 'Plank', sets: 3, reps: '30s' }
+            ],
+            intermediate: [
+                { name: 'Pull-ups', sets: 4, reps: '8-10' },
+                { name: 'Dips', sets: 4, reps: '12' },
+                { name: 'L-Sit Hold', sets: 3, reps: '15s' },
+                { name: 'Diamond Push-ups', sets: 3, reps: '10' }
+            ],
+            advanced: [
+                { name: 'Muscle-ups', sets: 5, reps: '5' },
+                { name: 'Handstand Push-ups', sets: 4, reps: '8' },
+                { name: 'Pistol Squats', sets: 3, reps: '10/side' },
+                { name: 'Front Lever Negatives', sets: 3, reps: '5' }
+            ]
+        };
+        return baseRoutines[level] || baseRoutines.beginner;
+    },
+
+    // --- Progress & Charts ---
+    initProgress() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const statsView = document.getElementById('progress-stats-view');
+        const photosView = document.getElementById('progress-photos-view');
+
+        tabs.forEach(tab => {
+            tab.onclick = () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (tab.dataset.tab === 'stats') {
+                    statsView.classList.remove('hidden');
+                    photosView.classList.add('hidden');
+                    this.renderCharts();
+                } else {
+                    statsView.classList.add('hidden');
+                    photosView.classList.remove('hidden');
+                }
+            };
+        });
+
+        this.renderCharts();
+        this.renderPRs();
+    },
+
+    renderCharts() {
+        const ctx = document.getElementById('volume-chart');
+        if (!ctx) return;
+
+        const data = Storage.load();
+        const last7 = data.history.slice(0, 7).reverse();
+        const labels = last7.map(w => new Date(w.date).toLocaleDateString(undefined, { weekday: 'short' }));
+        const volumes = last7.map(w => {
+            return w.exercises.reduce((acc, ex) => {
+                return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.reps * (s.weight || 1)), 0);
+            }, 0);
+        });
+
+        if (state.chart) state.chart.destroy();
+        
+        state.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Workout Volume',
+                    data: volumes,
+                    borderColor: '#39ff14',
+                    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false },
+                    x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }
+                }
+            }
+        });
+    },
+
+    renderPRs() {
+        const data = Storage.load();
+        const prItems = document.getElementById('pr-items');
+        if (!prItems) return;
+
+        const prs = {};
+        data.history.forEach(w => {
+            w.exercises.forEach(ex => {
+                const maxReps = Math.max(...ex.sets.map(s => s.reps));
+                if (!prs[ex.name] || maxReps > prs[ex.name]) {
+                    prs[ex.name] = maxReps;
+                }
+            });
+        });
+
+        prItems.innerHTML = Object.entries(prs).map(([name, val]) => `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <span>${name}</span>
+                <span style="color:var(--accent-color); font-weight:800;">${val} Reps</span>
+            </div>
+        `).join('') || '<div class="text-secondary text-center">No PRs yet</div>';
+    },
+
+    // --- Camera & AI Feedback ---
+    initCamera() {
+        const video = document.getElementById('camera-feed');
+        const closeBtn = document.getElementById('close-camera');
+        const captureBtn = document.getElementById('capture-btn');
+        const togglePose = document.getElementById('toggle-pose');
+        const feedback = document.getElementById('pose-feedback');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(stream => {
+                video.srcObject = stream;
+                state.cameraStream = stream;
+            })
+            .catch(err => {
+                alert("Camera access denied");
+                this.renderView('progress');
+            });
+
+        closeBtn.onclick = () => {
+            if (state.cameraStream) {
+                state.cameraStream.getTracks().forEach(track => track.stop());
+            }
+            this.renderView('progress');
+        };
+
+        togglePose.onclick = () => {
+            feedback.classList.toggle('hidden');
+            if (!feedback.classList.contains('hidden')) {
+                feedback.innerHTML = '<p>Form Analysis: <strong>Straight Back Detected</strong></p>';
+            }
+        };
+
+        captureBtn.onclick = () => {
+            alert("Photo saved to gallery (simulated)");
+            closeBtn.click();
+        };
+    },
+
+    // --- Profile ---
+    initProfile() {
+        const nameDisplay = document.getElementById('user-name-display');
+        const emailDisplay = document.getElementById('user-email-display');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        if (state.user) {
+            nameDisplay.textContent = state.user.name;
+            emailDisplay.textContent = state.user.email;
+        }
+
+        logoutBtn.onclick = () => Auth.logout();
     }
 };
 
 // --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     try {
+        await Auth.init();
+
         const nav = document.querySelector('.glass-nav');
         if (nav) {
             nav.addEventListener('click', (e) => {
@@ -495,6 +780,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Global UI exposure for inline handlers
         window.UI = UI;
+        window.showToast = (msg) => {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
 
         // Initial View - Check for active workout
         const saved = Storage.loadActiveWorkout();

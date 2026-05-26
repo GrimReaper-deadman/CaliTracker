@@ -124,7 +124,6 @@ const state = {
 // --- Auth Manager ---
 class Auth {
     static async init() {
-        // Mocking for now, real Supabase integration would go here
         const savedUser = localStorage.getItem('calitracker_user');
         if (savedUser) {
             state.user = JSON.parse(savedUser);
@@ -132,20 +131,39 @@ class Auth {
     }
 
     static async login(email, password) {
-        // Simulate login
+        // Simulate network delay
+        await new Promise(r => setTimeout(r, 800));
+        
         if (email && password) {
+            if (password.length < 4) return { success: false, error: 'Password too short' };
             state.user = { email, name: email.split('@')[0], id: 'user_' + Date.now() };
             localStorage.setItem('calitracker_user', JSON.stringify(state.user));
             return { success: true };
         }
-        return { success: false, error: 'Invalid credentials' };
+        return { success: false, error: 'Please enter email and password' };
     }
 
     static async signup(name, email, password) {
-        // Simulate signup
-        state.user = { email, name, id: 'user_' + Date.now() };
-        localStorage.setItem('calitracker_user', JSON.stringify(state.user));
-        return { success: true };
+        await new Promise(r => setTimeout(r, 1000));
+        
+        if (name && email && password) {
+            if (password.length < 4) return { success: false, error: 'Password too short' };
+            state.user = { email, name, id: 'user_' + Date.now() };
+            localStorage.setItem('calitracker_user', JSON.stringify(state.user));
+            return { success: true };
+        }
+        return { success: false, error: 'All fields are required' };
+    }
+
+    static async updateProfile(name, email) {
+        await new Promise(r => setTimeout(r, 500));
+        if (state.user) {
+            state.user.name = name || state.user.name;
+            state.user.email = email || state.user.email;
+            localStorage.setItem('calitracker_user', JSON.stringify(state.user));
+            return { success: true };
+        }
+        return { success: false };
     }
 
     static logout() {
@@ -154,6 +172,22 @@ class Auth {
         UI.renderView('auth');
     }
 }
+
+// --- Utils ---
+const Utils = {
+    setLoading(btnId, isLoading) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        if (isLoading) {
+            btn.dataset.originalText = btn.textContent;
+            btn.innerHTML = '<div class="spinner" style="margin: 0 auto;"></div>';
+            btn.disabled = true;
+        } else {
+            btn.textContent = btn.dataset.originalText;
+            btn.disabled = false;
+        }
+    }
+};
 
 // --- UI Components ---
 const UI = {
@@ -222,18 +256,34 @@ const UI = {
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-password').value;
+            
+            Utils.setLoading('login-btn', true);
             const res = await Auth.login(email, pass);
-            if (res.success) this.renderView('dashboard');
-            else alert(res.error);
+            Utils.setLoading('login-btn', false);
+
+            if (res.success) {
+                window.showToast("Welcome back!");
+                this.renderView('dashboard');
+            } else {
+                alert(res.error);
+            }
         };
 
         document.getElementById('signup-btn').onclick = async () => {
             const name = document.getElementById('signup-name').value;
             const email = document.getElementById('signup-email').value;
             const pass = document.getElementById('signup-password').value;
+            
+            Utils.setLoading('signup-btn', true);
             const res = await Auth.signup(name, email, pass);
-            if (res.success) this.renderView('dashboard');
-            else alert(res.error);
+            Utils.setLoading('signup-btn', false);
+
+            if (res.success) {
+                window.showToast("Account created successfully!");
+                this.renderView('dashboard');
+            } else {
+                alert(res.error);
+            }
         };
     },
 
@@ -263,11 +313,15 @@ const UI = {
 
             if (setGoalBtn) {
                 setGoalBtn.onclick = () => {
-                    const newGoal = prompt("Set your weekly workout goal:", goal);
-                    if (newGoal) {
-                        data.settings.weeklyGoal = parseInt(newGoal);
+                    const newGoal = prompt("Set your weekly workout goal (1-7):", goal);
+                    const parsed = parseInt(newGoal);
+                    if (parsed >= 1 && parsed <= 7) {
+                        data.settings.weeklyGoal = parsed;
                         Storage.save(data);
+                        window.showToast("Goal updated!");
                         this.initDashboard();
+                    } else if (newGoal) {
+                        alert("Please enter a number between 1 and 7");
                     }
                 };
             }
@@ -335,6 +389,7 @@ const UI = {
     confirmDelete(idx) {
         if (confirm("Delete this workout?")) {
             Storage.deleteWorkout(idx);
+            window.showToast("Workout deleted");
             this.initHistory();
         }
     },
@@ -356,9 +411,17 @@ const UI = {
             const finishBtn = document.getElementById('finish-workout-btn');
             const breakBtn = document.getElementById('start-break-btn');
 
+            const saveBtn = document.getElementById('save-workout-btn');
+
             if (addExBtn) addExBtn.onclick = () => this.showExercisePicker();
             if (finishBtn) finishBtn.onclick = () => this.finishWorkout();
             if (breakBtn) breakBtn.onclick = () => this.startBreak();
+            if (saveBtn) {
+                saveBtn.onclick = () => {
+                    Storage.saveActiveWorkout(state.activeWorkout, state.startTime);
+                    window.showToast("Progress saved to local storage");
+                };
+            }
             
             this.updateQuote();
         } catch (err) {
@@ -555,9 +618,24 @@ const UI = {
             alert("Add at least one exercise!");
             return;
         }
+
+        // Filter out empty sets
+        state.activeWorkout.exercises.forEach(ex => {
+            ex.sets = ex.sets.filter(s => s.reps > 0);
+        });
+        
+        state.activeWorkout.exercises = state.activeWorkout.exercises.filter(ex => ex.sets.length > 0);
+
+        if (state.activeWorkout.exercises.length === 0) {
+            alert("Please log at least one completed set!");
+            return;
+        }
+
         Storage.addWorkout(state.activeWorkout);
         state.activeWorkout = null;
         clearInterval(state.timerInterval);
+        
+        window.showToast("Workout saved! Great job!");
         this.renderView('dashboard');
     },
 
@@ -568,11 +646,16 @@ const UI = {
         const list = document.getElementById('ai-exercises-list');
         const startBtn = document.getElementById('start-ai-workout');
 
-        genBtn.onclick = () => {
+        genBtn.onclick = async () => {
             const level = document.getElementById('ai-level').value;
             const goal = document.getElementById('ai-goal').value;
             
-            // Logic to generate routine
+            Utils.setLoading('generate-ai-btn', true);
+            resultDiv.classList.add('hidden');
+            
+            // Artificial delay for "AI processing"
+            await new Promise(r => setTimeout(r, 1500));
+            
             const routine = this.generateRoutine(level, goal);
             
             list.innerHTML = routine.map(ex => `
@@ -581,24 +664,28 @@ const UI = {
                 </div>
             `).join('');
             
+            Utils.setLoading('generate-ai-btn', false);
             resultDiv.classList.remove('hidden');
             state.pendingRoutine = routine;
+            window.showToast("Routine generated!");
         };
 
         startBtn.onclick = () => {
+            if (!state.pendingRoutine) return;
+            
             this.renderView('workout');
             this.startNewWorkout();
             state.activeWorkout.name = "AI " + document.getElementById('ai-goal').value + " Routine";
             state.activeWorkout.exercises = state.pendingRoutine.map(ex => ({
                 name: ex.name,
-                sets: Array(ex.sets).fill({ reps: 0, weight: 0 })
+                sets: Array(ex.sets).fill(null).map(() => ({ reps: 0, weight: 0 }))
             }));
             this.resumeWorkout();
+            window.showToast("Workout started!");
         };
     },
 
     generateRoutine(level, goal) {
-        // Mocking sophisticated AI generation logic
         const baseRoutines = {
             beginner: [
                 { name: 'Push-ups', sets: 3, reps: '8-12' },
@@ -619,7 +706,17 @@ const UI = {
                 { name: 'Front Lever Negatives', sets: 3, reps: '5' }
             ]
         };
-        return baseRoutines[level] || baseRoutines.beginner;
+
+        let routine = JSON.parse(JSON.stringify(baseRoutines[level] || baseRoutines.beginner));
+        
+        // Slight randomization based on goal
+        if (goal === 'strength') {
+            routine.forEach(ex => { ex.sets += 1; ex.reps = '3-5'; });
+        } else if (goal === 'endurance') {
+            routine.forEach(ex => { ex.reps = '20+'; });
+        }
+        
+        return routine;
     },
 
     // --- Progress & Charts ---
@@ -627,6 +724,7 @@ const UI = {
         const tabs = document.querySelectorAll('.tab-btn');
         const statsView = document.getElementById('progress-stats-view');
         const photosView = document.getElementById('progress-photos-view');
+        const gallery = document.getElementById('photo-gallery');
 
         tabs.forEach(tab => {
             tab.onclick = () => {
@@ -639,12 +737,38 @@ const UI = {
                 } else {
                     statsView.classList.add('hidden');
                     photosView.classList.remove('hidden');
+                    this.renderPhotos();
                 }
             };
         });
 
         this.renderCharts();
         this.renderPRs();
+    },
+
+    renderPhotos() {
+        const gallery = document.getElementById('photo-gallery');
+        if (!gallery) return;
+
+        const photos = JSON.parse(localStorage.getItem('calitracker_photos') || '[]');
+        
+        // Keep the "Add Photo" card
+        gallery.innerHTML = `
+            <div class="add-photo-card glass" onclick="UI.renderView('camera')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>Take Photo</span>
+            </div>
+        `;
+
+        photos.forEach(photo => {
+            const card = document.createElement('div');
+            card.className = 'photo-card glass fade-in';
+            card.style.backgroundImage = `url(${photo.url})`;
+            card.style.backgroundSize = 'cover';
+            card.style.aspectRatio = '1';
+            card.style.borderRadius = '16px';
+            gallery.appendChild(card);
+        });
     },
 
     renderCharts() {
@@ -724,14 +848,13 @@ const UI = {
                 state.cameraStream = stream;
             })
             .catch(err => {
-                alert("Camera access denied");
+                console.error("Camera error:", err);
+                window.showToast("Camera access denied");
                 this.renderView('progress');
             });
 
         closeBtn.onclick = () => {
-            if (state.cameraStream) {
-                state.cameraStream.getTracks().forEach(track => track.stop());
-            }
+            this.stopCamera();
             this.renderView('progress');
         };
 
@@ -743,9 +866,30 @@ const UI = {
         };
 
         captureBtn.onclick = () => {
-            alert("Photo saved to gallery (simulated)");
-            closeBtn.click();
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            this.savePhoto(dataUrl);
+            window.showToast("Photo saved to gallery!");
+            this.stopCamera();
+            this.renderView('progress');
         };
+    },
+
+    stopCamera() {
+        if (state.cameraStream) {
+            state.cameraStream.getTracks().forEach(track => track.stop());
+            state.cameraStream = null;
+        }
+    },
+
+    savePhoto(dataUrl) {
+        const photos = JSON.parse(localStorage.getItem('calitracker_photos') || '[]');
+        photos.unshift({ date: new Date().toISOString(), url: dataUrl });
+        localStorage.setItem('calitracker_photos', JSON.stringify(photos));
     },
 
     // --- Profile ---
@@ -753,13 +897,42 @@ const UI = {
         const nameDisplay = document.getElementById('user-name-display');
         const emailDisplay = document.getElementById('user-email-display');
         const logoutBtn = document.getElementById('logout-btn');
+        const accountSettingsBtn = document.getElementById('account-settings-btn');
+        const unitSelect = document.getElementById('unit-select');
 
         if (state.user) {
             nameDisplay.textContent = state.user.name;
             emailDisplay.textContent = state.user.email;
         }
 
-        logoutBtn.onclick = () => Auth.logout();
+        if (accountSettingsBtn) {
+            accountSettingsBtn.onclick = async () => {
+                const newName = prompt("Enter new name:", state.user.name);
+                if (newName && newName !== state.user.name) {
+                    const res = await Auth.updateProfile(newName, null);
+                    if (res.success) {
+                        window.showToast("Profile updated!");
+                        this.initProfile();
+                    }
+                }
+            };
+        }
+
+        if (unitSelect) {
+            unitSelect.value = state.units || 'kg';
+            unitSelect.onchange = (e) => {
+                state.units = e.target.value;
+                window.showToast(`Units changed to ${state.units}`);
+            };
+        }
+
+        if (logoutBtn) {
+            logoutBtn.onclick = () => {
+                if (confirm("Are you sure you want to log out?")) {
+                    Auth.logout();
+                }
+            };
+        }
     }
 };
 

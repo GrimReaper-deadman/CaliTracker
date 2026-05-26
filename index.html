@@ -58,6 +58,37 @@
     </div>
 
     <!-- Templates for Dynamic Content -->
+    <template id="tpl-auth">
+        <div class="view-content fade-in auth-view">
+            <div class="auth-card glass">
+                <div class="text-center mb-20">
+                    <span class="logo-accent" style="font-size: 2rem; font-weight: 800;">Cali</span><span style="font-size: 2rem; font-weight: 800;">Tracker</span>
+                </div>
+                
+                <div id="login-form">
+                    <h2>Welcome Back</h2>
+                    <input type="email" id="login-email" placeholder="Email Address">
+                    <input type="password" id="login-password" placeholder="Password">
+                    <button id="login-btn" class="btn primary mt-10">Login</button>
+                    <p class="text-center mt-20 text-secondary">
+                        New here? <a href="#" id="show-signup" style="color:var(--accent-color);">Create Account</a>
+                    </p>
+                </div>
+
+                <div id="signup-form" class="hidden">
+                    <h2>Join CaliTracker</h2>
+                    <input type="text" id="signup-name" placeholder="Full Name">
+                    <input type="email" id="signup-email" placeholder="Email Address">
+                    <input type="password" id="signup-password" placeholder="Password">
+                    <button id="signup-btn" class="btn primary mt-10">Sign Up</button>
+                    <p class="text-center mt-20 text-secondary">
+                        Already have an account? <a href="#" id="show-login" style="color:var(--accent-color);">Log In</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <template id="tpl-dashboard">
         <div class="view-content fade-in">
             <h1>Welcome Back</h1>
@@ -84,6 +115,28 @@
                     <span id="stat-best-streak" class="stat-value">0</span>
                 </div>
             </div>
+            <div class="action-section mb-20">
+                <h2>Features</h2>
+                <div class="features-grid">
+                    <button class="feature-card glass" onclick="UI.renderView('ai-generator')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12L2.1 12.1"></path><path d="M12 12v10"></path><path d="M12 12l7.1 7.1"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span>AI Generator</span>
+                    </button>
+                    <button class="feature-card glass" onclick="UI.renderView('progress')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        <span>Progress</span>
+                    </button>
+                    <button class="feature-card glass" onclick="UI.renderView('profile')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Profile</span>
+                    </button>
+                    <button class="feature-card glass" onclick="UI.renderView('profile')">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Settings</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="action-section">
                 <h2>Quick Start</h2>
                 <div id="quick-start-list" class="exercise-list">
@@ -122,6 +175,7 @@
                     <button id="add-exercise-btn" class="btn secondary">Add Exercise</button>
                     <button id="start-break-btn" class="btn secondary">Start Break</button>
                 </div>
+                <button id="save-workout-btn" class="btn secondary">Save Progress</button>
                 <button id="finish-workout-btn" class="btn primary">Finish Session</button>
             </div>
         </div>
@@ -247,7 +301,7 @@
                     <span>Workout History</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
-                <div class="settings-item">
+                <div class="settings-item" id="account-settings-btn" style="cursor:pointer;">
                     <span>Account Settings</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>

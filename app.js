@@ -230,6 +230,7 @@ const UI = {
             if (viewName === 'progress') this.initProgress();
             if (viewName === 'profile') this.initProfile();
             if (viewName === 'camera') this.initCamera();
+            if (viewName === 'streak') this.initStreak();
         } catch (err) {
             console.error("Render error:", err);
         }
@@ -639,6 +640,47 @@ const UI = {
         this.renderView('dashboard');
     },
 
+    initStreak() {
+        try {
+            const data = Storage.load();
+            const currentVal = document.getElementById('current-streak-val');
+            const bestVal = document.getElementById('streak-best-val');
+            const lastVal = document.getElementById('streak-last-val');
+            const calendar = document.getElementById('activity-calendar');
+
+            if (currentVal) currentVal.textContent = data.settings.streak || 0;
+            if (bestVal) bestVal.textContent = data.settings.bestStreak || 0;
+            if (lastVal) {
+                if (data.settings.lastWorkoutDate) {
+                    lastVal.textContent = new Date(data.settings.lastWorkoutDate).toLocaleDateString();
+                } else {
+                    lastVal.textContent = 'None';
+                }
+            }
+
+            if (calendar) {
+                calendar.innerHTML = '';
+                const today = new Date();
+                for (let i = 29; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    const dStr = d.toDateString();
+                    
+                    const hasWorkout = data.history.some(w => new Date(w.date).toDateString() === dStr);
+                    
+                    const dot = document.createElement('div');
+                    dot.style.aspectRatio = '1';
+                    dot.style.borderRadius = '4px';
+                    dot.style.background = hasWorkout ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)';
+                    dot.title = dStr;
+                    calendar.appendChild(dot);
+                }
+            }
+        } catch (err) {
+            console.error("Streak init error:", err);
+        }
+    },
+
     // --- AI Generator ---
     initAIGenerator() {
         const genBtn = document.getElementById('generate-ai-btn');
@@ -949,6 +991,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     UI.renderView(btn.dataset.view);
                 }
             });
+        }
+
+        const streakBadge = document.getElementById('streak-badge');
+        if (streakBadge) {
+            streakBadge.onclick = () => UI.renderView('streak');
         }
 
         // Global UI exposure for inline handlers

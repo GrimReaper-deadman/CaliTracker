@@ -231,6 +231,7 @@ const UI = {
 
             // Initialize view-specific logic
             const initFunc = `init${viewName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('')}`;
+            console.log("Calling init function:", initFunc);
             if (this[initFunc]) this[initFunc]();
 
             // Refresh global elements
@@ -533,7 +534,7 @@ const UI = {
         if (skipBtn) skipBtn.onclick = () => { clearInterval(state.breakInterval); container.classList.add('hidden'); };
     },
 
-    initAIGenerator() {
+    initAiGenerator() {
         const genBtn = document.getElementById('generate-ai-btn');
         const resultDiv = document.getElementById('ai-result');
         const list = document.getElementById('ai-exercises-list');
@@ -635,8 +636,17 @@ const UI = {
 
     initProfile() {
         const data = Storage.load();
-        document.getElementById('user-name-display').textContent = state.user ? state.user.name : 'Guest';
-        document.getElementById('logout-btn').onclick = () => Auth.logout();
+        const nameEl = document.getElementById('user-name-display');
+        const emailEl = document.getElementById('user-email-display');
+        const logoutBtn = document.getElementById('logout-btn');
+        const accountBtn = document.getElementById('account-settings-btn');
+
+        if (nameEl) nameEl.textContent = state.user ? state.user.name : 'Guest User';
+        if (emailEl) emailEl.textContent = state.user ? state.user.email : 'Sign in to sync data';
+        
+        if (logoutBtn) logoutBtn.onclick = () => Auth.logout();
+        if (accountBtn) accountBtn.onclick = () => Utils.showToast("Cloud sync coming soon!");
+
         const unitSelect = document.getElementById('unit-select');
         if (unitSelect) {
             unitSelect.value = state.units;

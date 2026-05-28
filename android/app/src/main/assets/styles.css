@@ -192,15 +192,209 @@ h1 {
     font-size: 1rem;
 }
 
-.primary {
-    background: var(--accent-color);
-    color: #000;
+.btn.sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    width: auto;
 }
 
-.secondary {
-    background: var(--card-bg);
+.text-btn {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.dual-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
     color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-list {
+    display: grid;
+    gap: 10px;
+}
+
+.modal-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.modal-item:active {
+    background: var(--accent-glow);
+}
+
+/* Goals & Progress */
+.goal-card {
+    padding: 20px;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.progress-bar-bg {
+    background: rgba(255, 255, 255, 0.1);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: var(--accent-color);
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Quote Card */
+.quote-card {
+    padding: 15px;
+    font-style: italic;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Break Timer */
+.break-timer-card {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.break-header {
+    display: flex;
+    flex-direction: column;
+}
+
+#break-timer-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent-color);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.feature-card {
+    padding: 15px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: transform 0.2s;
+}
+
+.feature-card:active {
+    transform: scale(0.95);
+    background: var(--accent-glow);
+}
+
+.feature-card span {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.feature-card svg {
+    color: var(--accent-color);
+}
+
+/* Quick Start List */
+.exercise-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.quick-start-card {
+    padding: 15px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.quick-start-card:active {
+    border-color: var(--accent-color);
 }
 
 /* Workout View */
@@ -311,4 +505,262 @@ input[type="number"] {
     text-align: center;
     color: var(--text-secondary);
     margin-top: 50px;
+}
+
+/* Auth View */
+.auth-view {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    padding: 30px;
+    width: 100%;
+}
+
+.auth-card h2 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+input[type="email"], input[type="password"], input[type="text"], select {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.text-center { text-align: center; }
+.mb-10 { margin-bottom: 10px; }
+.mt-10 { margin-top: 10px; }
+.mt-20 { margin-top: 20px; }
+.p-20 { padding: 20px; }
+.p-15 { padding: 15px; }
+.mb-30 { margin-bottom: 30px; }
+
+/* AI Generator */
+.input-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: white;
+}
+
+/* Progress View */
+.stats-tabs {
+    display: flex;
+    background: var(--card-bg);
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.tab-btn.active {
+    background: var(--accent-color);
+    color: black;
+}
+
+.chart-container {
+    padding: 15px;
+    height: 250px;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.add-photo-card {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--accent-color);
+    border: 2px dashed var(--accent-glow);
+}
+
+/* Camera View */
+.camera-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: black;
+    z-index: 2000;
+    padding: 0;
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#pose-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.capture-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 5px solid white;
+    background: transparent;
+}
+
+.btn-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.pose-feedback {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    padding: 10px;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* Profile View */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-pic {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-color);
+}
+
+.settings-list {
+    overflow: hidden;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.settings-item:last-child { border-bottom: none; }
+
+.header-with-back {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Utils */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-color);
+    color: black;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    box-shadow: 0 0 20px var(--accent-glow);
+    z-index: 3000;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translate(-50%, -100%); }
+    to { transform: translate(-50%, 0); }
 }

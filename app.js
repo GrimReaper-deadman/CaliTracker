@@ -26,6 +26,8 @@ const state = {
     activeWorkout: null,
     timerInterval: null,
     startTime: null,
+    elapsedTime: 0,
+    isPaused: false,
     breakInterval: null,
     breakTime: 0,
     notificationPermission: 'default',
@@ -64,8 +66,8 @@ class Storage {
         localStorage.setItem(this.KEY, JSON.stringify(data));
     }
 
-    static saveActiveWorkout(workout, startTime) {
-        localStorage.setItem(this.ACTIVE_KEY, JSON.stringify({ workout, startTime }));
+    static saveActiveWorkout(workout, startTime, elapsedTime = 0) {
+        localStorage.setItem(this.ACTIVE_KEY, JSON.stringify({ workout, startTime, elapsedTime }));
     }
 
     static loadActiveWorkout() {
@@ -393,7 +395,10 @@ const UI = {
         const saved = Storage.loadActiveWorkout();
         if (saved && !state.activeWorkout) {
             state.activeWorkout = saved.workout;
-            state.startTime = saved.startTime;
+            // Timer reset on app load as per requirements
+            state.startTime = Date.now();
+            state.elapsedTime = 0;
+            state.isPaused = false;
             this.resumeWorkout();
         } else if (!state.activeWorkout) {
             this.startNewWorkout();
@@ -405,17 +410,30 @@ const UI = {
         const finishBtn = document.getElementById('finish-workout-btn');
         const breakBtn = document.getElementById('start-break-btn');
         const saveBtn = document.getElementById('save-workout-btn');
+        
+        // Timer controls
+        const pauseBtn = document.getElementById('pause-timer-btn');
+        const resumeBtn = document.getElementById('resume-timer-btn');
+        const resetBtn = document.getElementById('reset-timer-btn');
 
         if (addExBtn) addExBtn.onclick = () => this.showExercisePicker();
         if (finishBtn) finishBtn.onclick = () => this.finishWorkout();
         if (breakBtn) breakBtn.onclick = () => this.startBreak();
-        if (saveBtn) saveBtn.onclick = () => { Storage.saveActiveWorkout(state.activeWorkout, state.startTime); Utils.showToast("Saved"); };
+        if (saveBtn) saveBtn.onclick = () => { Storage.saveActiveWorkout(state.activeWorkout, state.startTime, state.elapsedTime); Utils.showToast("Saved"); };
+        
+        if (pauseBtn) pauseBtn.onclick = () => this.pauseTimer();
+        if (resumeBtn) resumeBtn.onclick = () => this.resumeTimer();
+        if (resetBtn) resetBtn.onclick = () => this.resetTimer();
+
+        this.updateTimerUI();
     },
 
     startNewWorkout() {
         state.activeWorkout = { date: new Date().toISOString(), exercises: [] };
         state.startTime = Date.now();
-        Storage.saveActiveWorkout(state.activeWorkout, state.startTime);
+        state.elapsedTime = 0;
+        state.isPaused = false;
+        Storage.saveActiveWorkout(state.activeWorkout, state.startTime, state.elapsedTime);
         this.startTimer();
     },
 
@@ -430,13 +448,54 @@ const UI = {
 
     startTimer() {
         if (state.timerInterval) clearInterval(state.timerInterval);
+        if (state.isPaused) return;
+
         state.timerInterval = setInterval(() => {
             const timerEl = document.getElementById('workout-timer');
-            const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
-            const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
-            const s = (elapsed % 60).toString().padStart(2, '0');
+            const now = Date.now();
+            const totalElapsedMs = state.elapsedTime + (now - state.startTime);
+            const totalSeconds = Math.floor(totalElapsedMs / 1000);
+            
+            const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const s = (totalSeconds % 60).toString().padStart(2, '0');
             if (timerEl) timerEl.textContent = `${m}:${s}`;
         }, 1000);
+    },
+
+    pauseTimer() {
+        if (state.isPaused) return;
+        clearInterval(state.timerInterval);
+        state.elapsedTime += (Date.now() - state.startTime);
+        state.isPaused = true;
+        this.updateTimerUI();
+    },
+
+    resumeTimer() {
+        if (!state.isPaused) return;
+        state.startTime = Date.now();
+        state.isPaused = false;
+        this.startTimer();
+        this.updateTimerUI();
+    },
+
+    resetTimer() {
+        clearInterval(state.timerInterval);
+        state.startTime = Date.now();
+        state.elapsedTime = 0;
+        state.isPaused = false;
+        const timerEl = document.getElementById('workout-timer');
+        if (timerEl) timerEl.textContent = '00:00';
+        this.startTimer();
+        this.updateTimerUI();
+    },
+
+    updateTimerUI() {
+        const pauseBtn = document.getElementById('pause-timer-btn');
+        const resumeBtn = document.getElementById('resume-timer-btn');
+        if (pauseBtn && resumeBtn) {
+            pauseBtn.classList.toggle('hidden', state.isPaused);
+            resumeBtn.classList.toggle('hidden', !state.isPaused);
+        }
     },
 
     showExercisePicker() {

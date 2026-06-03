@@ -185,7 +185,14 @@
     <template id="tpl-workout">
         <div class="view-content fade-in">
             <div class="workout-header">
-                <h1>Active Session</h1>
+                <div>
+                    <h1>Active Session</h1>
+                    <div class="timer-controls" style="display: flex; gap: 10px; margin-top: -5px;">
+                        <button id="pause-timer-btn" class="text-btn">Pause</button>
+                        <button id="resume-timer-btn" class="text-btn hidden">Resume</button>
+                        <button id="reset-timer-btn" class="text-btn" style="color:var(--danger);">Reset</button>
+                    </div>
+                </div>
                 <div id="workout-timer" class="timer">00:00</div>
             </div>
 

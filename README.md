@@ -19,8 +19,9 @@ You can use CaliTracker directly in your browser or install it as a PWA:
 3. Select **"Add to Home Screen"**.
 
 ### 🤖 Android APK
-Download the ultra-small (17KB) native app:
-- **[Download CaliTracker.apk](https://github.com/GrimReaper-deadman/CaliTracker/raw/main/CaliTracker.apk)**
+Download the ultra-small native app (Fixed Timer Version):
+- **[Direct Download: CaliTracker.apk](https://github.com/GrimReaper-deadman/CaliTracker/raw/main/CaliTracker.apk)**
+- *If the link above fails, try: [Alternative Download Link](https://github.com/GrimReaper-deadman/CaliTracker/blob/main/CaliTracker.apk?raw=true)*
 
 ## 🛠 Tech Stack
 - **Frontend:** Vanilla HTML5, CSS3, JavaScript.

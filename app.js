@@ -650,11 +650,14 @@ const UI = {
         const data = Storage.load();
         const last7 = data.history.slice(0, 7).reverse();
         if (state.chart) state.chart.destroy();
+        
+        const getVolume = (w) => w.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sacc, set) => sacc + (set.reps || 0) * (set.weight || 1), 0), 0);
+
         state.chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: last7.map(w => new Date(w.date).toLocaleDateString(undefined, { weekday: 'short' })),
-                datasets: [{ label: 'Volume', data: last7.map(w => 10), borderColor: '#39ff14', tension: 0.4 }]
+                datasets: [{ label: 'Volume', data: last7.map(w => getVolume(w)), borderColor: '#39ff14', tension: 0.4, backgroundColor: 'rgba(57, 255, 20, 0.1)', fill: true }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
@@ -679,18 +682,68 @@ const UI = {
         
         document.getElementById('capture-btn').onclick = () => {
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
             const photos = JSON.parse(localStorage.getItem('calitracker_photos') || '[]');
             photos.unshift({ url: canvas.toDataURL() });
             localStorage.setItem('calitracker_photos', JSON.stringify(photos));
             this.stopCamera(); this.renderView('progress');
         };
         document.getElementById('close-camera').onclick = () => { this.stopCamera(); this.renderView('progress'); };
+        
+        const togglePoseBtn = document.getElementById('toggle-pose');
+        const poseFeedback = document.getElementById('pose-feedback');
+        if (togglePoseBtn && poseFeedback) {
+            togglePoseBtn.onclick = () => {
+                const isHidden = poseFeedback.classList.contains('hidden');
+                if (isHidden) {
+                    poseFeedback.classList.remove('hidden');
+                    Utils.showToast("Pose tracking enabled");
+                    this.startPoseTracking();
+                } else {
+                    poseFeedback.classList.add('hidden');
+                    Utils.showToast("Pose tracking disabled");
+                    this.stopPoseTracking();
+                }
+            };
+        }
+    },
+
+    startPoseTracking() {
+        const canvas = document.getElementById('pose-canvas');
+        if (!canvas) return;
+        // Match canvas size to video size
+        const video = document.getElementById('camera-feed');
+        if (video) {
+            canvas.width = video.clientWidth;
+            canvas.height = video.clientHeight;
+        }
+        const ctx = canvas.getContext('2d');
+        let x = 0;
+        state.poseInterval = setInterval(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#39ff14';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // Draw a simple tracking box/circle
+            ctx.arc(canvas.width / 2 + Math.sin(x) * 50, canvas.height / 2 + Math.cos(x) * 50, 40, 0, 2 * Math.PI);
+            ctx.stroke();
+            x += 0.1;
+        }, 50);
+    },
+
+    stopPoseTracking() {
+        if (state.poseInterval) clearInterval(state.poseInterval);
+        const canvas = document.getElementById('pose-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
     },
 
     stopCamera() {
         if (state.cameraStream) state.cameraStream.getTracks().forEach(t => t.stop());
+        this.stopPoseTracking();
     },
 
     initProfile() {

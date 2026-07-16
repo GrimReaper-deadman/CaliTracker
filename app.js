@@ -688,7 +688,10 @@ const UI = {
         document.getElementById('capture-btn').onclick = () => {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const photos = JSON.parse(localStorage.getItem('calitracker_photos') || '[]');
             photos.unshift({ url: canvas.toDataURL() });
             localStorage.setItem('calitracker_photos', JSON.stringify(photos));

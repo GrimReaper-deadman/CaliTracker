@@ -676,9 +676,14 @@ const UI = {
 
     initCamera() {
         const video = document.getElementById('camera-feed');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-            .then(s => { video.srcObject = s; state.cameraStream = s; })
-            .catch(() => { Utils.showToast("Camera Error"); this.renderView('progress'); });
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                .then(s => { video.srcObject = s; state.cameraStream = s; })
+                .catch(err => { Utils.showToast("Camera Error: " + err.message); this.renderView('progress'); });
+        } else {
+            Utils.showToast("Camera API not supported or secure context required");
+            this.renderView('progress');
+        }
         
         document.getElementById('capture-btn').onclick = () => {
             const canvas = document.createElement('canvas');

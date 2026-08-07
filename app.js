@@ -646,10 +646,12 @@ const UI = {
 
     renderCharts() {
         const ctx = document.getElementById('volume-chart');
+        const muscleCtx = document.getElementById('muscle-group-chart');
         if (!ctx || typeof Chart === 'undefined') return;
         const data = Storage.load();
         const last7 = data.history.slice(0, 7).reverse();
         if (state.chart) state.chart.destroy();
+        if (state.muscleChart) state.muscleChart.destroy();
         
         const getVolume = (w) => w.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sacc, set) => sacc + (set.reps || 0) * (set.weight || 1), 0), 0);
 
@@ -661,6 +663,23 @@ const UI = {
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
+
+        if (muscleCtx) {
+            // Mock muscle group data (in a real app, parse this from the workouts)
+            const muscleData = { 'Chest': 30, 'Back': 25, 'Legs': 20, 'Arms': 15, 'Core': 10 };
+            state.muscleChart = new Chart(muscleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(muscleData),
+                    datasets: [{
+                        data: Object.values(muscleData),
+                        backgroundColor: ['#39ff14', '#00ffcc', '#ff00ff', '#ffff00', '#ff3333'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+            });
+        }
     },
 
     renderPhotos() {
@@ -767,11 +786,50 @@ const UI = {
         if (logoutBtn) logoutBtn.onclick = () => Auth.logout();
         if (accountBtn) accountBtn.onclick = () => Utils.showToast("Cloud sync coming soon!");
 
+        const exportBtn = document.getElementById('export-data-btn');
+        if (exportBtn) {
+            exportBtn.onclick = () => {
+                const data = Storage.load();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const anchor = document.createElement('a');
+                anchor.setAttribute("href", dataStr);
+                anchor.setAttribute("download", "calitracker_export.json");
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                Utils.showToast("Data Exported!");
+            };
+        }
+
         const unitSelect = document.getElementById('unit-select');
         if (unitSelect) {
             unitSelect.value = state.units;
             unitSelect.onchange = (e) => { state.units = e.target.value; Utils.showToast("Units updated"); };
         }
+
+        this.renderBadges(data);
+    },
+
+    renderBadges(data) {
+        const container = document.getElementById('badges-container');
+        if (!container) return;
+
+        const totalWorkouts = data.history ? data.history.length : 0;
+        const streak = data.streak ? data.streak.current : 0;
+
+        const badges = [
+            { id: 'first_workout', name: 'First Blood', icon: '🩸', unlocked: totalWorkouts >= 1 },
+            { id: 'streak_3', name: '3-Day Streak', icon: '🔥', unlocked: streak >= 3 },
+            { id: 'workout_10', name: '10 Workouts', icon: '💪', unlocked: totalWorkouts >= 10 },
+            { id: 'streak_7', name: '7-Day Streak', icon: '⚡', unlocked: streak >= 7 }
+        ];
+
+        container.innerHTML = badges.map(b => `
+            <div class="badge-item ${b.unlocked ? 'unlocked' : ''}">
+                <div class="badge-icon">${b.icon}</div>
+                <div class="badge-name">${b.name}</div>
+            </div>
+        `).join('');
     }
 };
 

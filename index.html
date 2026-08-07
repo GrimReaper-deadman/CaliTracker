@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CaliTracker | Calisthenics Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <meta name="theme-color" content="#0a0a0a">
     <link rel="manifest" href="manifest.json">
@@ -40,8 +41,8 @@
         </div>
 
         <!-- Navigation -->
-        <nav class="glass-nav">
-            <button class="nav-btn active" data-view="dashboard">
+        <nav class="glass-nav" aria-label="Main Navigation">
+            <button class="nav-btn active" data-view="dashboard" aria-label="Home">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 <span>Home</span>
             </button>
@@ -288,7 +289,12 @@
             </div>
             <div id="progress-stats-view">
                 <div class="chart-container glass mb-20">
+                    <h3 style="text-align: center; margin-bottom: 10px;">Workout Volume</h3>
                     <canvas id="volume-chart"></canvas>
+                </div>
+                <div class="chart-container glass mb-20">
+                    <h3 style="text-align: center; margin-bottom: 10px;">Muscle Group Distribution</h3>
+                    <canvas id="muscle-group-chart"></canvas>
                 </div>
                 <div class="pr-list glass p-15">
                     <h3>Personal Records</h3>
@@ -314,11 +320,16 @@
                 <video id="camera-feed" autoplay playsinline muted></video>
                 <canvas id="pose-canvas"></canvas>
                 <div class="camera-controls">
-                    <button id="capture-btn" class="capture-btn"></button>
                     <button id="close-camera" class="btn-icon">×</button>
+                    <button id="capture-btn" class="capture-btn"></button>
                     <button id="toggle-pose" class="btn-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     </button>
+                </div>
+                <div id="analysis-overlay" class="glass hidden" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;">
+                    <div class="spinner mb-20" style="width: 50px; height: 50px; border-width: 4px;"></div>
+                    <h2 style="color: var(--accent-color);">Scanning Physique...</h2>
+                    <p class="text-secondary mt-10" style="text-align: center; padding: 0 20px;">Analyzing muscle definition and proportions with AI...</p>
                 </div>
             </div>
             <div id="pose-feedback" class="glass pose-feedback hidden">
@@ -338,6 +349,14 @@
                     <p id="user-email-display" class="text-secondary">Sign in to sync data</p>
                 </div>
             </div>
+
+            <!-- Gamification Badges Section -->
+            <div class="badges-section glass p-15 mb-20">
+                <h3 style="margin-bottom: 15px;">Achievements</h3>
+                <div id="badges-container" class="badges-grid">
+                    <!-- Badges injected by app.js -->
+                </div>
+            </div>
             
             <div class="settings-list glass">
                 <div class="settings-item" onclick="UI.renderView('history')" style="cursor:pointer;">
@@ -350,10 +369,14 @@
                 </div>
                 <div class="settings-item">
                     <span>Units (kg/lbs)</span>
-                    <select id="unit-select">
+                    <select id="unit-select" aria-label="Select Unit">
                         <option value="kg">kg</option>
                         <option value="lbs">lbs</option>
                     </select>
+                </div>
+                <div class="settings-item" id="export-data-btn" style="cursor:pointer;">
+                    <span>Export Data</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 </div>
                 <div class="settings-item" id="logout-btn-container">
                     <button id="logout-btn" class="text-btn" style="color:var(--danger);">Log Out</button>

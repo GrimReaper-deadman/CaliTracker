@@ -646,18 +646,40 @@ const UI = {
 
     renderCharts() {
         const ctx = document.getElementById('volume-chart');
+        const muscleCtx = document.getElementById('muscle-group-chart');
         if (!ctx || typeof Chart === 'undefined') return;
         const data = Storage.load();
         const last7 = data.history.slice(0, 7).reverse();
         if (state.chart) state.chart.destroy();
+        if (state.muscleChart) state.muscleChart.destroy();
+        
+        const getVolume = (w) => w.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sacc, set) => sacc + (set.reps || 0) * (set.weight || 1), 0), 0);
+
         state.chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: last7.map(w => new Date(w.date).toLocaleDateString(undefined, { weekday: 'short' })),
-                datasets: [{ label: 'Volume', data: last7.map(w => 10), borderColor: '#39ff14', tension: 0.4 }]
+                datasets: [{ label: 'Volume', data: last7.map(w => getVolume(w)), borderColor: '#39ff14', tension: 0.4, backgroundColor: 'rgba(57, 255, 20, 0.1)', fill: true }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
+
+        if (muscleCtx) {
+            // Mock muscle group data (in a real app, parse this from the workouts)
+            const muscleData = { 'Chest': 30, 'Back': 25, 'Legs': 20, 'Arms': 15, 'Core': 10 };
+            state.muscleChart = new Chart(muscleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(muscleData),
+                    datasets: [{
+                        data: Object.values(muscleData),
+                        backgroundColor: ['#39ff14', '#00ffcc', '#ff00ff', '#ffff00', '#ff3333'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+            });
+        }
     },
 
     renderPhotos() {
@@ -673,24 +695,82 @@ const UI = {
 
     initCamera() {
         const video = document.getElementById('camera-feed');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-            .then(s => { video.srcObject = s; state.cameraStream = s; })
-            .catch(() => { Utils.showToast("Camera Error"); this.renderView('progress'); });
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                .then(s => { video.srcObject = s; state.cameraStream = s; })
+                .catch(err => { Utils.showToast("Camera Error: " + err.message); this.renderView('progress'); });
+        } else {
+            Utils.showToast("Camera API not supported or secure context required");
+            this.renderView('progress');
+        }
         
         document.getElementById('capture-btn').onclick = () => {
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             const photos = JSON.parse(localStorage.getItem('calitracker_photos') || '[]');
             photos.unshift({ url: canvas.toDataURL() });
             localStorage.setItem('calitracker_photos', JSON.stringify(photos));
             this.stopCamera(); this.renderView('progress');
         };
         document.getElementById('close-camera').onclick = () => { this.stopCamera(); this.renderView('progress'); };
+        
+        const togglePoseBtn = document.getElementById('toggle-pose');
+        const poseFeedback = document.getElementById('pose-feedback');
+        if (togglePoseBtn && poseFeedback) {
+            togglePoseBtn.onclick = () => {
+                const isHidden = poseFeedback.classList.contains('hidden');
+                if (isHidden) {
+                    poseFeedback.classList.remove('hidden');
+                    Utils.showToast("Pose tracking enabled");
+                    this.startPoseTracking();
+                } else {
+                    poseFeedback.classList.add('hidden');
+                    Utils.showToast("Pose tracking disabled");
+                    this.stopPoseTracking();
+                }
+            };
+        }
+    },
+
+    startPoseTracking() {
+        const canvas = document.getElementById('pose-canvas');
+        if (!canvas) return;
+        // Match canvas size to video size
+        const video = document.getElementById('camera-feed');
+        if (video) {
+            canvas.width = video.clientWidth;
+            canvas.height = video.clientHeight;
+        }
+        const ctx = canvas.getContext('2d');
+        let x = 0;
+        state.poseInterval = setInterval(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#39ff14';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // Draw a simple tracking box/circle
+            ctx.arc(canvas.width / 2 + Math.sin(x) * 50, canvas.height / 2 + Math.cos(x) * 50, 40, 0, 2 * Math.PI);
+            ctx.stroke();
+            x += 0.1;
+        }, 50);
+    },
+
+    stopPoseTracking() {
+        if (state.poseInterval) clearInterval(state.poseInterval);
+        const canvas = document.getElementById('pose-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
     },
 
     stopCamera() {
         if (state.cameraStream) state.cameraStream.getTracks().forEach(t => t.stop());
+        this.stopPoseTracking();
     },
 
     initProfile() {
@@ -706,11 +786,50 @@ const UI = {
         if (logoutBtn) logoutBtn.onclick = () => Auth.logout();
         if (accountBtn) accountBtn.onclick = () => Utils.showToast("Cloud sync coming soon!");
 
+        const exportBtn = document.getElementById('export-data-btn');
+        if (exportBtn) {
+            exportBtn.onclick = () => {
+                const data = Storage.load();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const anchor = document.createElement('a');
+                anchor.setAttribute("href", dataStr);
+                anchor.setAttribute("download", "calitracker_export.json");
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                Utils.showToast("Data Exported!");
+            };
+        }
+
         const unitSelect = document.getElementById('unit-select');
         if (unitSelect) {
             unitSelect.value = state.units;
             unitSelect.onchange = (e) => { state.units = e.target.value; Utils.showToast("Units updated"); };
         }
+
+        this.renderBadges(data);
+    },
+
+    renderBadges(data) {
+        const container = document.getElementById('badges-container');
+        if (!container) return;
+
+        const totalWorkouts = data.history ? data.history.length : 0;
+        const streak = data.streak ? data.streak.current : 0;
+
+        const badges = [
+            { id: 'first_workout', name: 'First Blood', icon: '🩸', unlocked: totalWorkouts >= 1 },
+            { id: 'streak_3', name: '3-Day Streak', icon: '🔥', unlocked: streak >= 3 },
+            { id: 'workout_10', name: '10 Workouts', icon: '💪', unlocked: totalWorkouts >= 10 },
+            { id: 'streak_7', name: '7-Day Streak', icon: '⚡', unlocked: streak >= 7 }
+        ];
+
+        container.innerHTML = badges.map(b => `
+            <div class="badge-item ${b.unlocked ? 'unlocked' : ''}">
+                <div class="badge-icon">${b.icon}</div>
+                <div class="badge-name">${b.name}</div>
+            </div>
+        `).join('');
     }
 };
 
